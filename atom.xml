@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Tanthen</title>
+  
+  <subtitle>天子的秘密花园</subtitle>
+  <link href="http://tanthen.github.io/atom.xml" rel="self"/>
+  
+  <link href="http://tanthen.github.io/"/>
+  <updated>2022-07-04T14:31:29.714Z</updated>
+  <id>http://tanthen.github.io/</id>
+  
+  <author>
+    <name>Tanthen</name>
+    
+  </author>
+  
+  <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>论文阅读 Attention Is All You Need</title>
+    <link href="http://tanthen.github.io/2022/07/04/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB-Attention-Is-All-You-Need/"/>
+    <id>http://tanthen.github.io/2022/07/04/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB-Attention-Is-All-You-Need/</id>
+    <published>2022-07-04T02:09:07.000Z</published>
+    <updated>2022-07-04T14:31:29.714Z</updated>
+    
+    
+    <summary type="html">&lt;p&gt;　　Transformer 是我从入门学习 NLP 开始就早有耳闻的内容，也是我之后的研究生生涯的最重要的基础框架，通过这篇论文再结合 Pytorch 版本的简单代码实现来了解 Transformer 内部的实现原理，包括位置编码，mask，attention的实现，encoder和decoder的构筑以及最终测试时贪心编码的运用。不过在阅读完这份简单代码并跟着实现之后还会有一些问题，由此会进一步改进代码。&lt;/p&gt;</summary>
+    
+    
+    
+    <category term="论文阅读笔记" scheme="http://tanthen.github.io/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/"/>
+    
+    
+    <category term="attention" scheme="http://tanthen.github.io/tags/attention/"/>
+    
+    <category term="transformer" scheme="http://tanthen.github.io/tags/transformer/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>使用网络爬虫爬取视频</title>
+    <link href="http://tanthen.github.io/2022/07/01/%E4%BD%BF%E7%94%A8%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E7%88%AC%E5%8F%96%E8%A7%86%E9%A2%91/"/>
+    <id>http://tanthen.github.io/2022/07/01/%E4%BD%BF%E7%94%A8%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E7%88%AC%E5%8F%96%E8%A7%86%E9%A2%91/</id>
+    <published>2022-07-01T14:22:11.000Z</published>
+    <updated>2022-07-02T03:12:35.586Z</updated>
+    
+    
+    <summary type="html">&lt;p&gt; 　　学习网络爬虫有一定的时间了，但都仅限于爬取文字信息或者说是图片，还未爬取过一些流文件，这几天想试试从某个网站上爬取视频文件，折腾了一个下午总算是搞好了。&lt;/p&gt;</summary>
+    
+    
+    
+    <category term="网络爬虫" scheme="http://tanthen.github.io/categories/%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB/"/>
+    
+    
+    <category term="爬虫" scheme="http://tanthen.github.io/tags/%E7%88%AC%E8%99%AB/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>hexo常用操作</title>
+    <link href="http://tanthen.github.io/2022/06/30/hexo%E5%B8%B8%E7%94%A8%E6%93%8D%E4%BD%9C/"/>
+    <id>http://tanthen.github.io/2022/06/30/hexo%E5%B8%B8%E7%94%A8%E6%93%8D%E4%BD%9C/</id>
+    <published>2022-06-30T12:50:15.000Z</published>
+    <updated>2022-07-01T14:20:22.475Z</updated>
+    
+    
+    <summary type="html">&lt;p&gt;　　第一次搭建博客，根据同学的推荐，结合 hexo 和 github 共同搭建了个人博客网站，主题采用的是ayer，hexo 中有挺多的 api 都还没有学习，不过对于短期之内写博客文章乃至于长期的博客维护，应该都只需要掌握一些基础的操作即可，对于一些深入博客外观相关的探索包括自定义主题和 hexo 的内核都在之后有时间再探索。&lt;/p&gt;</summary>
+    
+    
+    
+    <category term="搭建博客" scheme="http://tanthen.github.io/categories/%E6%90%AD%E5%BB%BA%E5%8D%9A%E5%AE%A2/"/>
+    
+    
+    <category term="hexo" scheme="http://tanthen.github.io/tags/hexo/"/>
+    
+    <category term="博客" scheme="http://tanthen.github.io/tags/%E5%8D%9A%E5%AE%A2/"/>
+    
+  </entry>
+  
+</feed>

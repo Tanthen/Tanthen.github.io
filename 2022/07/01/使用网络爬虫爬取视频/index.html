@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+        
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>使用网络爬虫爬取视频 |  Tanthen</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/favicon.ico" />
+       
+<link rel="stylesheet" href="/dist/main.css">
+
+      
+<link rel="stylesheet" href="/css/fonts/remixicon.css">
+
+      
+<link rel="stylesheet" href="/css/custom.css">
+ 
+      <script src="https://cdn.staticfile.org/pace/1.2.4/pace.min.js"></script>
+       
+ 
+
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bulma@5.0.1/bulma.min.css"
+      />
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <link rel="alternate" href="/atom.xml" title="Tanthen" type="application/atom+xml">
+</head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="post-使用网络爬虫爬取视频"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  使用网络爬虫爬取视频
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/2022/07/01/%E4%BD%BF%E7%94%A8%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E7%88%AC%E5%8F%96%E8%A7%86%E9%A2%91/" class="article-date">
+  <time datetime="2022-07-01T14:22:11.000Z" itemprop="datePublished">2022-07-01</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB/">网络爬虫</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">1.2k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">5 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <p> 　　学习网络爬虫有一定的时间了，但都仅限于爬取文字信息或者说是图片，还未爬取过一些流文件，这几天想试试从某个网站上爬取视频文件，折腾了一个下午总算是搞好了。</p>
+<span id="more"></span>
+
+<h1 id="一-以-m3u8-与-ts-的方式传输的视频文件"><a href="#一-以-m3u8-与-ts-的方式传输的视频文件" class="headerlink" title="一. 以 m3u8 与 ts 的方式传输的视频文件"></a>一. 以 m3u8 与 ts 的方式传输的视频文件</h1><p>　　通过 m3u8 的方式合成视频的组件有三个部分，首先是 .m3u8 文件，这个文件就像是一个将军，指挥不同的 .ts 文件按照其命名进行有序地结合，其次是 .ts 文件，就像是一个个士卒，装载着视频的主要部分，而最后的 key 文件则像是士卒的身份，在加密情况下无法解开每一个 .ts 文件格式的内容，因此需要使用key来进行解码。</p>
+<h2 id="1-1-获取-m3u8-文件"><a href="#1-1-获取-m3u8-文件" class="headerlink" title="1.1 获取 m3u8 文件"></a>1.1 获取 m3u8 文件</h2><p>　　首先还是要分析网页信息，受朋友委托就以 jable.tv 网站为例，首先打开想要爬取的视频所在的网页，按下 F12 分析网络元素，点击network来到图(1-1-1)所示的界面，对于这个网页的一系列元素，最值得关注的是它发送视频的形式，即 <code>.m3u8</code> 文件，这里通过直接访问这个网页浏览器就可以将 <code>.m3u8</code> 文件下载下来，将该文件放到想要生成视频的文件目录下。</p>
+<p><img src="https://s1.ax1x.com/2022/07/01/jlcVD1.png" alt="图(1-1-1)"></p>
+<h2 id="1-2-获取-ts-文件"><a href="#1-2-获取-ts-文件" class="headerlink" title="1.2 获取 .ts 文件"></a>1.2 获取 .ts 文件</h2><p>　　接下来便是要通过 <code>requests.get</code> 函数来获取这一系列的 <code>.ts</code> 文件了，url 的开头与 <code>.m3u8</code> 的 url 开头类似，这里可以参考图(1-1-1)所示的右半部分的 Request URL，它们怎么请求我们就跟着怎么请求，对于每一个 <code>.ts</code> 文件，我们将原来的 <code>.m3u8</code> 的最后一部分：<code>/18201.m3u8</code> 更改为 <code>/18201x.ts</code> 即可获取相对应的文件了，这里的 x 是需要在 <code>.m3u8</code> 文件中查看的，对于这一部影片而言可以由图(1-2-1)看出，它的 x 是从0开始一直到1817即发出请求的 url 最后一部分是从 <code>/182010.ts</code> 按照从小到大一直到 <code>/182011817.ts</code> 因此便可以通过循环来不断获取这些 <code>.ts</code> 文件片段。</p>
+<p><img src="https://s1.ax1x.com/2022/07/01/jlWnLd.png" alt="图(1-2-1)"></p>
+<p>　　但仅仅在 get 中写下目标网址的 url 仍然无法获取我们想要的内容，第一个原因是这个网站是一个外网，无法通过国内的有效途径进行访问，这时候就需要科学上网，但对于我自己而言，仅仅通过科学上网仍然会收获一个 <code>ProxyError: HTTPSConnectionPool...</code> ，第二个原因是没有添加请求头导致会返回403，因此需要对函数进行一些设置，局部代码如下所示: </p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> tqdm <span class="keyword">import</span> tqdm</span><br><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"></span><br><span class="line">proxies = &#123;</span><br><span class="line">        <span class="string">&#x27;http&#x27;</span>: <span class="string">&#x27;127.0.0.1:1080&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;https&#x27;</span>: <span class="string">&#x27;127.0.0.1:1080&#x27;</span></span><br><span class="line">    &#125;  <span class="comment"># 如果是使用本地的科学上网软件进行的就这样设置代理</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">get_ts_seq</span>():</span><br><span class="line">    headers = &#123;</span><br><span class="line">        <span class="string">&quot;authority&quot;</span>: <span class="string">&quot;asutin-billion.mushroomtrack.com&quot;</span>,</span><br><span class="line">        <span class="string">&quot;method&quot;</span>: <span class="string">&quot;GET&quot;</span>,</span><br><span class="line">        <span class="string">&quot;scheme&quot;</span>: <span class="string">&quot;https&quot;</span>,</span><br><span class="line">        <span class="string">&quot;accept&quot;</span>: <span class="string">&quot;*/*&quot;</span>,</span><br><span class="line">        <span class="string">&quot;accept-encoding&quot;</span>: <span class="string">&quot;gzip, deflate, br&quot;</span>,</span><br><span class="line">        <span class="string">&#x27;accept-language&#x27;</span>: <span class="string">&quot;zh-CN,zh;q=0.9,en-US;q =0.8,en;q=0.7&quot;</span>,</span><br><span class="line">        <span class="string">&quot;origin&quot;</span>: <span class="string">&quot;https://jable.tv&quot;</span>,</span><br><span class="line">        <span class="string">&quot;referer&quot;</span>: <span class="string">&quot;https://jable.tv/&quot;</span>,</span><br><span class="line">        <span class="string">&quot;sec-ch-ua&quot;</span>: <span class="string">&#x27;&quot;.Not/A)Brand&quot;;v=&quot;99&quot;,&quot;Google Chrome&quot;;v=&quot;103&quot;,&quot;Chromium&quot;;v=&quot;103&quot;&#x27;</span>,</span><br><span class="line">        <span class="string">&quot;sec-ch-ua-mobile&quot;</span>: <span class="string">&quot;?0&quot;</span>,</span><br><span class="line">        <span class="string">&quot;sec-ch-ua-platform&quot;</span>: <span class="string">&#x27;&quot;Windows&quot;&#x27;</span>,</span><br><span class="line">        <span class="string">&quot;sec-fetch-dest&quot;</span>: <span class="string">&quot;empty&quot;</span>,</span><br><span class="line">        <span class="string">&quot;sec-fetch-mode&quot;</span>: <span class="string">&quot;cors&quot;</span>,</span><br><span class="line">        <span class="string">&quot;sec-fetch-site&quot;</span>: <span class="string">&quot;cross-site&quot;</span>,</span><br><span class="line">        <span class="string">&quot;user-agent&quot;</span>: <span class="string">&#x27;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36&#x27;</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> tqdm(<span class="built_in">range</span>(<span class="number">0</span>, <span class="number">1818</span>), desc=<span class="string">&#x27;trying to get the ts&#x27;</span>):</span><br><span class="line">        url = <span class="string">f&#x27;https://master-piece.alonestreaming.com/hls/byXOfDRH1PCfgEDy05eZmQ/1656697252/18000/18201/18201<span class="subst">&#123;i&#125;</span>.ts&#x27;</span></span><br><span class="line">        res = requests.get(url=url, headers=headers, proxies=proxies)</span><br><span class="line">        data = res.content</span><br><span class="line">        <span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">f&#x27;./MIAA-465/18201<span class="subst">&#123;i&#125;</span>.ts&#x27;</span>, <span class="string">&#x27;ab+&#x27;</span>) <span class="keyword">as</span> f:  <span class="comment"># 这里保存的文件名格式一定要与m3u8中的一样，如182011817.ts</span></span><br><span class="line">            f.write(data)</span><br></pre></td></tr></table></figure>
+
+<center>代码(1-2-2)</center>
+
+<h2 id="1-3-获取key文件"><a href="#1-3-获取key文件" class="headerlink" title="1.3 获取key文件"></a>1.3 获取key文件</h2><p>　　key 文件的位置是在 <code>.m3u8</code> 文件中能够获取的，如图(1-3-1)可以看到 key 中的 URI 文件也是以 <code>.ts</code> 为后缀，将类似于代码(1-2-2)所示的那样 url 的后部分由<code>/18201&#123;i&#125;.ts</code> 更改为图(1-3-1)中的URI <code>28c4a1a4c547a9ae.ts</code> ，并将其直接复制到网页上访问即可让浏览器下载 key 文件，将该文件放到同 <code>.m3u8</code> 的文件目录下。这样便总共有了 <code>.m3u8</code> 文件，<code>.ts</code> 文件和 key 文件。</p>
+<p><img src="https://s1.ax1x.com/2022/07/02/j1QTdx.png" alt="图(1-3-1)"></p>
+<h2 id="1-4-使用ffmpeg合成视频"><a href="#1-4-使用ffmpeg合成视频" class="headerlink" title="1.4 使用ffmpeg合成视频"></a>1.4 使用ffmpeg合成视频</h2><p>  　　当一切都准备就绪的情况下通过 ffmpeg 合成这三种文件，得到最后的 .mp4 文件，这里的 {m3u8filename} 是之前通过代码得到的 .m3u8 文件名，{videoname} 则是想要为视频命的名字</p>
+<p><code>ffmpeg -allowed_extensions ALL -i &#123;m3u8filename&#125; -c copy &#123;videoname&#125;.mp4</code></p>
+ 
+      <!-- reward -->
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <footer class="article-footer">
+       
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://tanthen.github.io/2022/07/01/%E4%BD%BF%E7%94%A8%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E7%88%AC%E5%8F%96%E8%A7%86%E9%A2%91/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>  
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%88%AC%E8%99%AB/" rel="tag">爬虫</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="/2022/07/04/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB-Attention-Is-All-You-Need/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            论文阅读 Attention Is All You Need
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2022/06/30/hexo%E5%B8%B8%E7%94%A8%E6%93%8D%E4%BD%9C/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">hexo常用操作</div>
+      </a>
+    
+  </nav>
+
+  
+   
+    
+    <script src="https://cdn.staticfile.org/twikoo/1.4.18/twikoo.all.min.js"></script>
+    <div id="twikoo" class="twikoo"></div>
+    <script>
+        twikoo.init({
+            envId: ""
+        })
+    </script>
+ 
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2022
+        <i class="ri-heart-fill heart_icon"></i> Tanthen
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Tanthen"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/friends">友链</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/2019/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-3.6.0.min.js"></script>
+ 
+<script src="/js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="https://cdn.staticfile.org/jquery-modal/0.9.2/jquery.modal.min.js"></script>
+<link
+  rel="stylesheet"
+  href="https://cdn.staticfile.org/jquery-modal/0.9.2/jquery.modal.min.css"
+/>
+<script src="https://cdn.staticfile.org/justifiedGallery/3.8.1/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/photoswipe/4.1.3/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.staticfile.org/photoswipe/4.1.3/default-skin/default-skin.min.css">
+<script src="https://cdn.staticfile.org/photoswipe/4.1.3/photoswipe.min.js"></script>
+<script src="https://cdn.staticfile.org/photoswipe/4.1.3/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script> 
+<!-- MathJax -->
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="/css/clipboard.css">
+ <script src="https://cdn.staticfile.org/clipboard.js/2.0.10/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "forest" });
+  }
+</script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+        
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>论文阅读 Attention Is All You Need |  Tanthen</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/favicon.ico" />
+       
+<link rel="stylesheet" href="/dist/main.css">
+
+      
+<link rel="stylesheet" href="/css/fonts/remixicon.css">
+
+      
+<link rel="stylesheet" href="/css/custom.css">
+ 
+      <script src="https://cdn.staticfile.org/pace/1.2.4/pace.min.js"></script>
+       
+ 
+
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bulma@5.0.1/bulma.min.css"
+      />
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <link rel="alternate" href="/atom.xml" title="Tanthen" type="application/atom+xml">
+</head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="post-论文阅读-Attention-Is-All-You-Need"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  论文阅读 Attention Is All You Need
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/2022/07/04/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB-Attention-Is-All-You-Need/" class="article-date">
+  <time datetime="2022-07-04T02:09:07.000Z" itemprop="datePublished">2022-07-04</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/">论文阅读笔记</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">1.7k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">7 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <p>　　Transformer 是我从入门学习 NLP 开始就早有耳闻的内容，也是我之后的研究生生涯的最重要的基础框架，通过这篇论文再结合 Pytorch 版本的简单代码实现来了解 Transformer 内部的实现原理，包括位置编码，mask，attention的实现，encoder和decoder的构筑以及最终测试时贪心编码的运用。不过在阅读完这份简单代码并跟着实现之后还会有一些问题，由此会进一步改进代码。</p>
+<span id="more"></span>
+
+<h1 id="论文介绍"><a href="#论文介绍" class="headerlink" title="论文介绍"></a>论文介绍</h1><h2 id="论文背景"><a href="#论文背景" class="headerlink" title="论文背景"></a>论文背景</h2><p>　　这篇论文的目的是为了减少在以循环神经网络为基础的网络架构的计算步长，在循环神经网络中，由于对于一个长度为 seq_length 的句子，在一次迭代中数据就会经过seq_length个循环神经单元，由于每一个循环神经元的输入需要前一个循环神经元的输出，因此这种架构的模型的时间开销较大。而 Transformer 则是采用了一种全新的基于 attention 的架构替换掉原有的循环神经网络，并另使用一个位置向量来保存输入序列中处于不同位置的词，这样的构筑使得模型能够并行计算序列中的每一个序列元素对应的输出。</p>
+<h2 id="模型优势"><a href="#模型优势" class="headerlink" title="模型优势"></a>模型优势</h2><p>　　<img src="https://s1.ax1x.com/2022/07/04/jGjojg.png" alt="图(1-2-1)"></p>
+<p>　　如图(1-2-1)展示了 Transformer 模型与循环神经网络、卷积神经网络在 Complexity per Layer , Sequential Operations , Maximum Path Length 这三个层次进行分析。参数 n 代表输入序列的长度，d代表词表示的维度，k表示在CNN网络中的核大小，r代表对 self-attention 进行限制的最长范围。</p>
+<p>　　Complexity per Layer 是对每一层的计算复杂度进行考量，对于 Self-Attention 而言，序列中每一个输入词维度为 d ，对于一个词的输出，需要有每一个词的参与，求得每一个词对这个词的权重向量，因此就有了 n * d 的复杂度，而一共需要计算 n 个词的输出，因此总共的复杂度为 n * n * d 。</p>
+<p>　　Sequential Operations是与并串行相关的指标，在设备并行能力足够的情况下，经过一层的步数，对于 Recurrent 而言，一层需要经过 n 个循环神经元，Self-Attention 则近似于只需要常数大小的全连接层。</p>
+<p>　　MPL(Maximum Path Length) 的指标是针对于这类序列类型的输入，它所衡量的是在一个序列中最大间隔的两个词之间的关联性即论文中所提到的 long-range dependencies，在 Recurrent 中，输入序列的第一个词到最后一个词之间经过了 n 层，因此它的 MPL 为n，而对于 Self-Attention 而言，它的第一个和最后一个之间仅仅只通过了一个常数级别的全连接层 ，即经过全连接层得到对应的 K 和 Q，DotProductAttention 来得到结果。</p>
+<p>　　Self-Attention (restricted) 是在输入序列较长的情况下，计算复杂度是一个平方增长，因此通过添加一个限制，即在计算一个词的输出的时候，仅考量该词附近的 r 个词来进行 self-attention 操作而非所有的词，因而将复杂度降为一个线性复杂度。</p>
+<p>　　从 Complexity per Layer 上考量，当输入序列较小的时候 Self-Attention 相较于 Recurrent 来说每层的计算复杂度更低，而输入的嵌入向量较小时则相反，而通常处理的数据中基本都是嵌入维度远大于输入维度，并且 Self-Attention 还可以加入范围限制来进一步缩小计算复杂度，因此从这个层面上来看 Self-Attention 的优势更大。从 Sequential Operations 和 MPL 上考量，利用 self-attention 机制能够将这两个指标降为一个常数级别，相较于 Recurrent 依赖于序列长度，更加具有优势。</p>
+<h1 id="模型架构"><a href="#模型架构" class="headerlink" title="模型架构"></a>模型架构</h1><h2 id="整体模型架构"><a href="#整体模型架构" class="headerlink" title="整体模型架构"></a>整体模型架构</h2><p>　　如图(2-1-1)所示，输入的是一个 <code>[batch_size, sequence_lenght]</code> 的单词 id 序列，左半部分是 Encoder，右半部分是 Decoder经过一层 <code>Embedding </code> 后得到 <code>[batch_size, sequence_length, d_model]</code> 序列向量。Positional Encoding 用于为输入序列添加位置信息被添加进输入向量中。再经过 N 个多头 Attention 和 Feed Forward，论文中的 N 设置为 6。</p>
+<p><img src="https://s1.ax1x.com/2022/07/04/jYVBrR.png" alt="图(2-1-1)"></p>
+<h2 id="Embedding"><a href="#Embedding" class="headerlink" title="Embedding"></a>Embedding</h2><p>　　如图(2-1-1)的inputs，是正常的词级别的 Embedding，将预处理后(代码2-2-1)得到的序数序列通过 Embedding 层转变为一个 d_model 大小的词向量。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">sentences = [</span><br><span class="line">    [<span class="string">&#x27;ich mochte ein bier P&#x27;</span>, <span class="string">&#x27;S i want a beer .&#x27;</span>, <span class="string">&#x27;i want a beer . E&#x27;</span>],  <span class="comment"># enc_inputs, dec_inputs, dec_outputs(label)</span></span><br><span class="line">    [<span class="string">&#x27;ich mochte ein cola P&#x27;</span>, <span class="string">&#x27;S i want a coke .&#x27;</span>, <span class="string">&#x27;i want a coke . E&#x27;</span>]</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line">src_vocab = &#123;<span class="string">&#x27;P&#x27;</span>: <span class="number">0</span>, <span class="string">&#x27;ich&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;mochte&#x27;</span>: <span class="number">2</span>, <span class="string">&#x27;ein&#x27;</span>: <span class="number">3</span>, <span class="string">&#x27;bier&#x27;</span>: <span class="number">4</span>, <span class="string">&#x27;cola&#x27;</span>: <span class="number">5</span>&#125;</span><br><span class="line">src_idx2word = &#123;i: w <span class="keyword">for</span> i, w <span class="keyword">in</span> <span class="built_in">enumerate</span>(src_vocab)&#125;  <span class="comment"># 构造输入词典（德语）</span></span><br><span class="line">src_vocab_size = <span class="built_in">len</span>(src_vocab)</span><br><span class="line"></span><br><span class="line">tgt_vocab = &#123;<span class="string">&#x27;P&#x27;</span>: <span class="number">0</span>, <span class="string">&#x27;i&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;want&#x27;</span>: <span class="number">2</span>, <span class="string">&#x27;a&#x27;</span>: <span class="number">3</span>, <span class="string">&#x27;beer&#x27;</span>: <span class="number">4</span>, <span class="string">&#x27;coke&#x27;</span>: <span class="number">5</span>, <span class="string">&#x27;S&#x27;</span>: <span class="number">6</span>, <span class="string">&#x27;E&#x27;</span>: <span class="number">7</span>, <span class="string">&#x27;.&#x27;</span>: <span class="number">8</span>&#125;</span><br><span class="line">tgt_idx2word = &#123;i: w <span class="keyword">for</span> i, w <span class="keyword">in</span> <span class="built_in">enumerate</span>(tgt_vocab)&#125;  <span class="comment"># 构造输出词典（英语）</span></span><br><span class="line">tgt_vocab_size = <span class="built_in">len</span>(tgt_vocab) </span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">make_data</span>(<span class="params">sentences</span>):  <span class="comment"># 将单词转换为字典中的序数</span></span><br><span class="line">    enc_inputs, dec_inputs, dec_outputs = [], [], []</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(sentences)):</span><br><span class="line">        enc_input = [src_vocab[n] <span class="keyword">for</span> n <span class="keyword">in</span> sentences[i][<span class="number">0</span>].split()]</span><br><span class="line">        dec_input = [tgt_vocab[n] <span class="keyword">for</span> n <span class="keyword">in</span> sentences[i][<span class="number">1</span>].split()]</span><br><span class="line">        dec_output = [tgt_vocab[n] <span class="keyword">for</span> n <span class="keyword">in</span> sentences[i][<span class="number">2</span>].split()]</span><br><span class="line">        enc_inputs.append(enc_input)</span><br><span class="line">        dec_inputs.append(dec_input)</span><br><span class="line">        dec_outputs.append(dec_output)</span><br><span class="line">    <span class="keyword">return</span> torch.tensor(enc_inputs), torch.tensor(dec_inputs), torch.tensor(dec_outputs)</span><br><span class="line">enc_inputs, dec_inputs, dec_outputs = make_data(sentences)</span><br><span class="line"><span class="built_in">print</span>(enc_inputs)  <span class="comment"># 其他同理</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">tensor([[1, 2, 3, 4, 0],</span></span><br><span class="line"><span class="string">        [1, 2, 3, 5, 0]])</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<center>代码2-2-1</center>
+
+<p>　　位置编码是图(2-1-1)中的 Position Encoding 部分，套用的论文中给出的公式(图2-2-2)，原论文中有提到位置编码也可以通过训练的方式得到，但是最终的结果和采用这种 sin 和 cos 编码的结果相似，并且这个是生成一个固定的位置编码向量，因此也更加节省资源。(代码2-2-3)给出了位置编码的具体实现与相应的注释。</p>
+<p><img src="https://s1.ax1x.com/2022/07/04/jYtocR.png" alt="图(2-2-2)"></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">PositionEncoding</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, d_model, dropout=<span class="number">0.1</span>, max_len=<span class="number">5000</span></span>):</span><br><span class="line">        <span class="built_in">super</span>(PositionEncoding, self).__init__()</span><br><span class="line">        self.dropout = nn.Dropout(dropout)</span><br><span class="line">        PE = torch.zeros(max_len, d_model)</span><br><span class="line">        pos = torch.arange(<span class="number">0</span>, max_len, dtype=torch.<span class="built_in">float</span>).unsqueeze(<span class="number">1</span>)  <span class="comment"># max_len, 1</span></span><br><span class="line">        div = <span class="number">10000</span> ** (torch.arange(<span class="number">0</span>, d_model, <span class="number">2</span>) / d_model)</span><br><span class="line">        PE[:, <span class="number">0</span>::<span class="number">2</span>] = torch.sin(pos / div)</span><br><span class="line">        PE[:, <span class="number">1</span>::<span class="number">2</span>] = torch.cos(pos / div)</span><br><span class="line">        PE = PE.unsqueeze(<span class="number">0</span>).transpose(<span class="number">0</span>, <span class="number">1</span>)</span><br><span class="line">        self.register_buffer(<span class="string">&#x27;PE&#x27;</span>, PE)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        :param x: length, batch, d_model</span></span><br><span class="line"><span class="string">        :return:</span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        position_embeddings = self.PE[:x.shape[<span class="number">0</span>], :, :]</span><br><span class="line">        output = x + position_embeddings</span><br><span class="line">        <span class="keyword">return</span> self.dropout(output)</span><br></pre></td></tr></table></figure>
+
+<p>　　位置编码中的内容我也是研究了一会，由于对 python 中的一些广播机制或者说是特性的不熟悉，需要一步一步地去观测在这几行代码中进行了怎样的运算。</p>
+ 
+      <!-- reward -->
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <footer class="article-footer">
+       
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://tanthen.github.io/2022/07/04/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB-Attention-Is-All-You-Need/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>  
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/attention/" rel="tag">attention</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/transformer/" rel="tag">transformer</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+    
+      <a href="/2022/07/01/%E4%BD%BF%E7%94%A8%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E7%88%AC%E5%8F%96%E8%A7%86%E9%A2%91/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">使用网络爬虫爬取视频</div>
+      </a>
+    
+  </nav>
+
+  
+   
+    
+    <script src="https://cdn.staticfile.org/twikoo/1.4.18/twikoo.all.min.js"></script>
+    <div id="twikoo" class="twikoo"></div>
+    <script>
+        twikoo.init({
+            envId: ""
+        })
+    </script>
+ 
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2022
+        <i class="ri-heart-fill heart_icon"></i> Tanthen
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Tanthen"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/friends">友链</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/2019/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-3.6.0.min.js"></script>
+ 
+<script src="/js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="https://cdn.staticfile.org/jquery-modal/0.9.2/jquery.modal.min.js"></script>
+<link
+  rel="stylesheet"
+  href="https://cdn.staticfile.org/jquery-modal/0.9.2/jquery.modal.min.css"
+/>
+<script src="https://cdn.staticfile.org/justifiedGallery/3.8.1/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/photoswipe/4.1.3/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.staticfile.org/photoswipe/4.1.3/default-skin/default-skin.min.css">
+<script src="https://cdn.staticfile.org/photoswipe/4.1.3/photoswipe.min.js"></script>
+<script src="https://cdn.staticfile.org/photoswipe/4.1.3/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script> 
+<!-- MathJax -->
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="/css/clipboard.css">
+ <script src="https://cdn.staticfile.org/clipboard.js/2.0.10/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "forest" });
+  }
+</script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>
