@@ -6,7 +6,7 @@
   <link href="http://tanthen.github.io/atom.xml" rel="self"/>
   
   <link href="http://tanthen.github.io/"/>
-  <updated>2022-07-04T14:31:29.714Z</updated>
+  <updated>2022-07-06T02:14:39.541Z</updated>
   <id>http://tanthen.github.io/</id>
   
   <author>
@@ -17,11 +17,11 @@
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
-    <title>论文阅读 Attention Is All You Need</title>
+    <title>论文阅读与实现 Attention Is All You Need</title>
     <link href="http://tanthen.github.io/2022/07/04/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB-Attention-Is-All-You-Need/"/>
     <id>http://tanthen.github.io/2022/07/04/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB-Attention-Is-All-You-Need/</id>
     <published>2022-07-04T02:09:07.000Z</published>
-    <updated>2022-07-04T14:31:29.714Z</updated>
+    <updated>2022-07-06T02:14:39.541Z</updated>
     
     
     <summary type="html">&lt;p&gt;　　Transformer 是我从入门学习 NLP 开始就早有耳闻的内容，也是我之后的研究生生涯的最重要的基础框架，通过这篇论文再结合 Pytorch 版本的简单代码实现来了解 Transformer 内部的实现原理，包括位置编码，mask，attention的实现，encoder和decoder的构筑以及最终测试时贪心编码的运用。不过在阅读完这份简单代码并跟着实现之后还会有一些问题，由此会进一步改进代码。&lt;/p&gt;</summary>
